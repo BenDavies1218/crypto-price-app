@@ -10,7 +10,7 @@ export default function SingleCurrency({ data }: { data: Currency }) {
       </div>
       <div className="flex h-[40px] w-[96px] items-center gap-2">
         <Image
-          src={`/color/${data.symbol.toLocaleLowerCase()}.png`}
+          src={`/color/${data.symbol.toLocaleLowerCase()}.png` || "/ton.svg"}
           alt={data.name}
           width={30}
           height={30}

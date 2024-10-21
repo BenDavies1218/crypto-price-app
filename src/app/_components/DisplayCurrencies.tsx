@@ -8,7 +8,8 @@ import { Input } from "~/components/ui/input";
 
 export function DisplayCurrencies() {
   // Fetch currencies data
-  const [currencies] = api.post.getData.useSuspenseQuery();
+  // const [currencies] = api.post.getData.useSuspenseQuery();
+  const { data: currencies } = api.post.getData.useQuery();
 
   // Close search bar when clicking outside of it using a ref
   const ref = useRef<HTMLDivElement>(null);
@@ -39,14 +40,14 @@ export function DisplayCurrencies() {
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
 
   // Create a filtered list of currencies based on the search query
-  const filteredCurrencies = Array.isArray(currencies)
+  const filteredCurrencies: Currency[] = Array.isArray(currencies)
     ? currencies.filter((currency: Currency) =>
         currency.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : [];
 
   // Sort filtered currencies this is whats rendered after the user searches if they search
-  const sortedFilteredCurrencies = [...filteredCurrencies].sort(
+  const sortedFilteredCurrencies = [...filteredCurrencies]?.sort(
     (a: Currency, b: Currency) => {
       let comparison = 0;
 
@@ -145,7 +146,7 @@ export function DisplayCurrencies() {
           <SingleCurrency key={currency.cmc_rank} data={currency} />
         ))
       ) : (
-        <div>No currencies found...</div>
+        <div>Loading Cypto Currencies...</div>
       )}
     </div>
   );
