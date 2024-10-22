@@ -8,7 +8,6 @@ import { Input } from "~/components/ui/input";
 
 export default function DisplayCurrencies() {
   // Fetch currencies data
-  // const [currencies] = api.post.getData.useSuspenseQuery();
   const { data: currencies } = api.post.getData.useQuery();
 
   // Close search bar when clicking outside of it using a ref
@@ -45,6 +44,12 @@ export default function DisplayCurrencies() {
         currency.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : [];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [removedCurrencies, setRemovedCurrencies] = useState<boolean>(false);
+  const removeCurrenyState = () => {
+    setRemovedCurrencies((prev) => !prev);
+  };
 
   // Sort filtered currencies this is whats rendered to the user
   const sortedFilteredCurrencies = [...filteredCurrencies]?.sort(
@@ -84,7 +89,7 @@ export default function DisplayCurrencies() {
 
   return (
     <div
-      className="flex max-h-[600px] min-h-[600px] min-w-[455px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
+      className="flex max-h-[600px] min-h-[600px] w-[455px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
       ref={ref}
     >
       {/* Search bar and title / heading */}
@@ -116,7 +121,7 @@ export default function DisplayCurrencies() {
         )}
       </div>
       {/* Display the filter options (The heading ) */}
-      <div className="grid w-full grid-cols-4 rounded-md pt-2">
+      <div className="grid w-[420px] grid-cols-4 rounded-md pr-8 pt-2">
         {["#", "name", "price", "percent"].map((filter) => (
           <div
             key={filter}
@@ -143,10 +148,14 @@ export default function DisplayCurrencies() {
       {/* Display currencies or a message if no currencies are found */}
       {sortedFilteredCurrencies.length > 0 ? (
         sortedFilteredCurrencies.map((currency: Currency) => (
-          <SingleCurrency key={currency.cmc_rank} data={currency} />
+          <SingleCurrency
+            key={currency.cmc_rank}
+            data={currency}
+            removeCurrenyState={removeCurrenyState}
+          />
         ))
       ) : searchOpen ? (
-        <div>No currencies found</div>
+        <div className="w-[440px]">No currencies found</div>
       ) : (
         <>
           {([1, 2, 3, 4, 5, 6] as const).map((_, index) => (
@@ -154,7 +163,7 @@ export default function DisplayCurrencies() {
               key={index}
               className="grid grid-cols-1 gap-2 rounded-md border-2 border-black bg-zinc-800 p-4"
             >
-              <div className="flex h-[40px] w-[386px] items-center justify-center">
+              <div className="flex h-[40px] w-[396px] items-center justify-center">
                 {index === 0 && <div>Loading Currencies...</div>}
               </div>
             </div>

@@ -6,7 +6,28 @@ import type { Currency } from "~/server/api/routers/post";
 import { Input } from "~/components/ui/input";
 
 export default function UserWatchlist() {
-  const currencies: Currency[] = [];
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [removedCurrencies, setRemovedCurrencies] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Get the watchlist from localStorage when the component mounts
+    const storedWatchlist = localStorage.getItem("watchlist");
+
+    if (storedWatchlist) {
+      try {
+        // Parse the stored JSON and set it as the currencies state
+        const parsedWatchlist = JSON.parse(storedWatchlist) as Currency[];
+        setCurrencies(parsedWatchlist);
+      } catch (error) {
+        console.error("Error parsing watchlist data from localStorage:", error);
+      }
+    }
+  }, [removedCurrencies]);
+
+  const removeCurrenyState = () => {
+    setRemovedCurrencies((prev) => !prev);
+  };
+
   // Close search bar when clicking outside of it using a ref
   const ref = useRef<HTMLDivElement>(null);
 
@@ -80,7 +101,7 @@ export default function UserWatchlist() {
 
   return (
     <div
-      className="flex max-h-[600px] min-h-[600px] min-w-[455px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
+      className="flex max-h-[600px] min-h-[600px] w-[455px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
       ref={ref}
     >
       {/* Search bar and title / heading */}
@@ -112,7 +133,7 @@ export default function UserWatchlist() {
         )}
       </div>
       {/* Display the filter options (The heading ) */}
-      <div className="grid w-full grid-cols-4 rounded-md pt-2">
+      <div className="grid w-[420px] grid-cols-4 rounded-md pr-8 pt-2">
         {["#", "name", "price", "percent"].map((filter) => (
           <div
             key={filter}
@@ -139,7 +160,11 @@ export default function UserWatchlist() {
       {/* Display currencies or a message if no currencies are found */}
       {sortedFilteredCurrencies.length > 0
         ? sortedFilteredCurrencies.map((currency: Currency) => (
-            <SingleCurrency key={currency.cmc_rank} data={currency} />
+            <SingleCurrency
+              key={currency.cmc_rank}
+              data={currency}
+              removeCurrenyState={removeCurrenyState}
+            />
           ))
         : searchOpen && <div>No currencies found</div>}
     </div>
