@@ -1,29 +1,37 @@
 "use client";
 import Image from "next/image";
 import type { Currency } from "~/server/api/routers/post";
+import { useState } from "react";
 
 export default function SingleCurrency({ data }: { data: Currency }) {
+  const [imgSrc, setImgSrc] = useState(
+    `/color/${data.symbol.toLocaleLowerCase()}.png`,
+  );
+
   return (
     <div className="grid grid-cols-4 rounded-md border-2 border-black bg-zinc-800 p-4">
-      <div className="rank flex h-[40px] w-[80px] items-center justify-center">
+      <div className="flex h-[40px] w-[80px] items-center justify-center text-sm">
         {data.cmc_rank}#
       </div>
       <div className="flex h-[40px] w-[96px] items-center gap-2">
         <Image
-          src={`/color/${data.symbol.toLocaleLowerCase()}.png` || "/ton.svg"}
+          src={imgSrc}
           alt={data.name}
           width={30}
           height={30}
+          onError={() => setImgSrc("/no-image-svgrepo-com.svg")}
         />
         <div>
-          <h2 className="text-sm">{data.name}</h2>
-          <h5 className="text-xs">
+          <div className="text-sm">{data.name}</div>
+          <div className="text-xxs text-slate-400">
             {`${(data.quote.USD.volume_24h / 1_000_000_000).toFixed(2)}bn`}
-          </h5>
+          </div>
         </div>
       </div>
-      <div className="flex h-[40px] w-[96px] items-center justify-center">
-        {`$${data.quote.USD.price.toFixed(2)}`}
+      <div className="text-xxs flex h-[40px] w-[96px] items-center justify-center">
+        {data.quote.USD.price < 0.01
+          ? `$${data.quote.USD.price.toFixed(6)}`
+          : `$${data.quote.USD.price.toFixed(2)}`}
       </div>
       <div className="flex h-[40px] w-[96px] items-center justify-center gap-1 rounded-md">
         <div
@@ -47,7 +55,6 @@ export default function SingleCurrency({ data }: { data: Currency }) {
             width={20}
             height={20}
           />
-
           <div
             className={`text-sm ${
               data.quote.USD.percent_change_24h > 0
