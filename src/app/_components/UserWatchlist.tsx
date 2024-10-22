@@ -1,16 +1,12 @@
 "use client";
-import type { Currency } from "~/server/api/routers/post";
-import { api } from "~/trpc/react";
-import SingleCurrency from "./SingleCurrency";
 import Image from "next/image";
+import SingleCurrency from "./SingleCurrency";
 import { useEffect, useRef, useState } from "react";
+import type { Currency } from "~/server/api/routers/post";
 import { Input } from "~/components/ui/input";
 
-export default function DisplayCurrencies() {
-  // Fetch currencies data
-  // const [currencies] = api.post.getData.useSuspenseQuery();
-  const { data: currencies } = api.post.getData.useQuery();
-
+export default function UserWatchlist() {
+  const currencies: Currency[] = [];
   // Close search bar when clicking outside of it using a ref
   const ref = useRef<HTMLDivElement>(null);
 
@@ -141,26 +137,11 @@ export default function DisplayCurrencies() {
       </div>
 
       {/* Display currencies or a message if no currencies are found */}
-      {sortedFilteredCurrencies.length > 0 ? (
-        sortedFilteredCurrencies.map((currency: Currency) => (
-          <SingleCurrency key={currency.cmc_rank} data={currency} />
-        ))
-      ) : searchOpen ? (
-        <div>No currencies found</div>
-      ) : (
-        <>
-          {([1, 2, 3, 4, 5, 6] as const).map((_, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 gap-2 rounded-md border-2 border-black bg-zinc-800 p-4"
-            >
-              <div className="flex h-[40px] w-[386px] items-center justify-center">
-                {index === 0 && <div>Loading Currencies...</div>}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
+      {sortedFilteredCurrencies.length > 0
+        ? sortedFilteredCurrencies.map((currency: Currency) => (
+            <SingleCurrency key={currency.cmc_rank} data={currency} />
+          ))
+        : searchOpen && <div>No currencies found</div>}
     </div>
   );
 }
