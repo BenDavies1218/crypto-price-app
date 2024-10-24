@@ -1,103 +1,95 @@
 "use client";
+
 import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 import type { Currency } from "~/server/api/routers/post";
-import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/use-toast";
+import ImageWithFallback from "../NextImageWithFallback";
 
 export default function SingleCurrency({
   data,
-  removeCurrenyState,
+  removeCurrencyState,
 }: {
   data: Currency;
-  removeCurrenyState: () => void;
+  removeCurrencyState: () => void;
 }) {
-  const [imgSrc, setImgSrc] = useState(
-    `/color/${data.symbol.toLocaleLowerCase()}.png`,
-  );
-
   const { toast } = useToast();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
-  // Function to safely parse the watchlist from localStorage
+  // Utility function to get the watchlist from localStorage
   const getWatchlist = (): Currency[] => {
     const currentWatchlist = localStorage.getItem("watchlist");
-    if (!currentWatchlist) {
-      return [];
-    }
-
+    if (!currentWatchlist) return [];
     try {
-      // Try to parse the watchlist
       return JSON.parse(currentWatchlist) as Currency[];
     } catch (error) {
-      console.error("Error parsing watchlist JSON", error);
-      // Return an empty array if parsing fails
+      console.error("Error parsing watchlist JSON:", error);
       return [];
     }
   };
 
-  // Check if the currency is already in the watchlist on mount
+  // Check if currency is in watchlist on mount
   useEffect(() => {
     const watchlist = getWatchlist();
     const foundInWatchlist = watchlist.some(
-      (item: Currency) => item.symbol === data.symbol,
+      (item) => item.symbol === data.symbol,
     );
     setIsInWatchlist(foundInWatchlist);
   }, [data.symbol]);
 
-  const handleAddToWatchlist = () => {
-    const watchlist = getWatchlist();
-
-    // Check if the item is already in the watchlist
-    const isAlreadyInWatchlist = watchlist.some(
-      (item: Currency) => item.symbol === data.symbol,
-    );
-
-    if (!isAlreadyInWatchlist) {
-      // Add new currency to the watchlist
-      watchlist.push(data);
-      localStorage.setItem("watchlist", JSON.stringify(watchlist));
-      setIsInWatchlist(true);
+  // Helper to show toast notifications
+  const showToast = useCallback(
+    (message: string) => {
       toast({
         description: (
           <div className="flex items-center gap-2">
-            <Image
-              src={imgSrc}
+            <ImageWithFallback
               alt={data.name}
-              width={20}
               height={20}
+              width={20}
+              src={`/color/${data.symbol.toLowerCase()}.png`}
               className="rounded-full"
             />
-            <span className="text-xxs">{`${data.name} has been added to your watchlist`}</span>
+            <span className="text-xxs">{message}</span>
           </div>
         ),
       });
-    }
-  };
+    },
+    [data.name, data.symbol, toast],
+  );
 
-  const handleRemoveFromWatchlist = () => {
+  // Add currency to watchlist
+  const handleAddToWatchlist = useCallback(() => {
     const watchlist = getWatchlist();
+    const isAlreadyInWatchlist = watchlist.some(
+      (item) => item.symbol === data.symbol,
+    );
 
-    // Remove the currency from the watchlist
+    if (!isAlreadyInWatchlist) {
+      watchlist.push(data);
+      localStorage.setItem("watchlist", JSON.stringify(watchlist));
+      setIsInWatchlist(true);
+      showToast(`${data.name} has been added to your watchlist`);
+    }
+  }, [data, showToast]);
+
+  // Remove currency from watchlist
+  const handleRemoveFromWatchlist = useCallback(() => {
+    const watchlist = getWatchlist();
     const updatedWatchlist = watchlist.filter(
-      (item: Currency) => item.symbol !== data.symbol,
+      (item) => item.symbol !== data.symbol,
     );
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
     setIsInWatchlist(false);
-    removeCurrenyState();
-    toast({
-      description: (
-        <div className="flex items-center gap-2">
-          <Image
-            src={imgSrc}
-            alt={data.name}
-            width={20}
-            height={20}
-            className="rounded-full"
-          />
-          <span className="text-xxs">{`${data.name} has been removed from your watchlist`}</span>
-        </div>
-      ),
-    });
+    removeCurrencyState();
+    showToast(`${data.name} has been removed from your watchlist`);
+  }, [data, removeCurrencyState, showToast]);
+
+  // Format volume for display
+  const formatVolume = (volume: number) => {
+    return volume < 500_000_000
+      ? `${(volume / 1_000_000).toFixed(2)}m`
+      : `${(volume / 1_000_000_000).toFixed(2)}bn`;
   };
 
   return (
@@ -106,17 +98,16 @@ export default function SingleCurrency({
         {data.cmc_rank}#
       </div>
       <div className="flex h-[40px] w-[96px] items-center gap-2">
-        <Image
-          src={imgSrc}
+        <ImageWithFallback
           alt={data.name}
-          width={30}
-          height={30}
-          onError={() => setImgSrc("/no-image-svgrepo-com.svg")}
+          height={20}
+          width={20}
+          src={`/color/${data.symbol.toLowerCase()}.png`}
         />
         <div>
-          <div className="text-sm">{data.name}</div>
+          <div className="text-xxs">{data.name}</div>
           <div className="text-xxs text-slate-400">
-            {`${(data.quote.USD.volume_24h / 1_000_000_000).toFixed(2)}bn`}
+            {formatVolume(data.quote.USD.volume_24h)}
           </div>
         </div>
       </div>
@@ -157,27 +148,21 @@ export default function SingleCurrency({
             {data.quote.USD.percent_change_24h.toFixed(2)}%
           </div>
         </div>
-        {isInWatchlist ? (
-          <div className="absolute right-[-30px] hover:cursor-pointer">
-            <Image
-              src={"/remove-svgrepo-com.svg"}
-              alt="Remove from Watchlist"
-              width={20}
-              height={20}
-              onClick={handleRemoveFromWatchlist}
-            />
-          </div>
-        ) : (
-          <div className="absolute right-[-30px] hover:cursor-pointer">
-            <Image
-              src={"/plus-svgrepo-com.svg"}
-              alt="Add to Watchlist"
-              width={20}
-              height={20}
-              onClick={handleAddToWatchlist}
-            />
-          </div>
-        )}
+        <div className="absolute right-[-30px] hover:cursor-pointer">
+          <Image
+            src={
+              isInWatchlist
+                ? "/remove-svgrepo-com.svg"
+                : "/plus-svgrepo-com.svg"
+            }
+            alt={isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+            width={20}
+            height={20}
+            onClick={
+              isInWatchlist ? handleRemoveFromWatchlist : handleAddToWatchlist
+            }
+          />
+        </div>
       </div>
     </div>
   );

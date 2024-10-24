@@ -1,28 +1,29 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
-import DisplayCurrencies from "./DisplayCurrencies";
-import UserWatchlist from "./UserWatchlist";
+import DisplayCurrencies from "./_Tracker/DisplayCurrencies";
+import UserWatchlist from "./_Tracker/UserWatchlist";
 
 export default function CryptoTrackerApp() {
   return (
     <>
-      <div className="absolute left-8 top-20 text-2xl text-slate-300">
+      <div className="absolute left-8 top-20 text-xl text-slate-300">
         Updates
-        <ul className="list-disc pl-5 pt-6 text-base">
+        <ul className="list-disc pl-5 pt-6 text-sm">
           <strong>Styling</strong>
           <ul className="list-disc pl-5">
             <li>Added Loading text / skeleton</li>
             <li>Styled Search Icon / Input</li>
             <li>Changed text sizing / colors</li>
-            <li></li>
+            <li>Added Fallback Image</li>
           </ul>
         </ul>
-        <ul className="list-disc pl-5 pt-6 text-base">
+        <ul className="list-disc pl-5 pt-6 text-sm">
           <strong>Functional</strong>
           <ul className="list-disc pl-5">
             <li>Increase in starting search data</li>
             <li>Displays numbers less than zero</li>
             <li>Created Tabs & Watchlist for User</li>
+            <li>useInfiniteQuery to infinitely Fetch Data</li>
           </ul>
         </ul>
       </div>

@@ -6,55 +6,48 @@ import type { Currency } from "~/server/api/routers/post";
 import { Input } from "~/components/ui/input";
 
 export default function UserWatchlist() {
+  // State Management
   const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isActive, setIsActive] = useState<string | null>("#");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [removedCurrencies, setRemovedCurrencies] = useState<boolean>(false);
 
-  useEffect(() => {
-    // Get the watchlist from localStorage when the component mounts
-    const storedWatchlist = localStorage.getItem("watchlist");
+  // Ref for managing click outside of search input & focus on Search input
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // Use Effect
+  useEffect(() => {
+    // Fetch and parse the watchlist from localStorage
+    const storedWatchlist = localStorage.getItem("watchlist");
     if (storedWatchlist) {
       try {
-        // Parse the stored JSON and set it as the currencies state
         const parsedWatchlist = JSON.parse(storedWatchlist) as Currency[];
         setCurrencies(parsedWatchlist);
       } catch (error) {
         console.error("Error parsing watchlist data from localStorage:", error);
       }
     }
-  }, [removedCurrencies]);
 
-  const removeCurrenyState = () => {
-    setRemovedCurrencies((prev) => !prev);
-  };
-
-  // Close search bar when clicking outside of it using a ref
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close search bar when clicking outside of it using a ref add an event the to page to check if the user clicks outside of app
-  useEffect(() => {
+    // Handle click outside for closing the search input
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setSearchOpen(false);
         setSearchQuery("");
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [ref]);
+  }, [removedCurrencies, ref]);
 
-  // Sort direction state and active filter state
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [isActive, setIsActive] = useState<string | null>("#");
-
-  // Search query state
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
-  // search Open and close State
-  const [searchOpen, setSearchOpen] = useState<boolean>(false);
+  // Functions
+  const removeCurrencyState = () => {
+    setRemovedCurrencies((prev) => !prev);
+  };
 
   // Create a filtered list of currencies based on the search query
   const filteredCurrencies: Currency[] = Array.isArray(currencies)
@@ -63,11 +56,10 @@ export default function UserWatchlist() {
       )
     : [];
 
-  // Sort filtered currencies this is whats rendered to the user
+  // Sort filtered currencies (what's rendered to the user)
   const sortedFilteredCurrencies = [...filteredCurrencies]?.sort(
     (a: Currency, b: Currency) => {
       let comparison = 0;
-
       switch (isActive) {
         case "#":
           comparison = a.cmc_rank - b.cmc_rank;
@@ -76,13 +68,11 @@ export default function UserWatchlist() {
           comparison = a.name.localeCompare(b.name);
           break;
         case "price":
-          comparison = a.quote.USD.price - b.quote.USD.price;
+          comparison = b.quote.USD.price - a.quote.USD.price;
           break;
         case "percent":
           comparison =
-            a.quote.USD.percent_change_24h - b.quote.USD.percent_change_24h;
-          break;
-        default:
+            b.quote.USD.percent_change_24h - a.quote.USD.percent_change_24h;
           break;
       }
 
@@ -90,6 +80,7 @@ export default function UserWatchlist() {
     },
   );
 
+  // Handle the sorting of the currencies
   const handleFilterChange = (filter: string) => {
     if (filter === isActive) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -99,9 +90,17 @@ export default function UserWatchlist() {
     }
   };
 
+  // Focus input when search icon is clicked
+  const handleSearchIconClick = () => {
+    setSearchOpen(!searchOpen);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
   return (
     <div
-      className="flex max-h-[600px] min-h-[600px] w-[455px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
+      className="flex max-h-[500px] min-h-[500px] w-[450px] flex-col items-center gap-2 overflow-x-hidden rounded-lg border-2 border-black bg-zinc-900 p-4"
       ref={ref}
     >
       {/* Search bar and title / heading */}
@@ -117,27 +116,39 @@ export default function UserWatchlist() {
               alt=""
               width={30}
               height={30}
-              onClick={() => setSearchOpen(!searchOpen)}
+              onClick={handleSearchIconClick}
               className="hover:cursor-pointer"
-            ></Image>
+            />
           </>
         )}
         {searchOpen && (
-          <Input
-            type="text"
-            placeholder="Search by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded-lg border-2 border-black bg-zinc-800 p-2"
-          />
+          <div className="flex w-full items-center justify-between gap-2">
+            <Image
+              src={"/search-alt-svgrepo-com.svg"}
+              alt=""
+              width={30}
+              height={30}
+              onClick={handleSearchIconClick}
+              className="hover:cursor-pointer"
+            />
+            <Input
+              ref={inputRef}
+              type="text"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="rounded-lg border-2 border-black bg-zinc-800 p-2"
+            />
+          </div>
         )}
       </div>
-      {/* Display the filter options (The heading ) */}
-      <div className="grid w-[420px] grid-cols-4 rounded-md pr-8 pt-2">
+
+      {/* Filter options */}
+      <div className="grid w-[380px] grid-cols-4 rounded-md pr-10 pt-2">
         {["#", "name", "price", "percent"].map((filter) => (
           <div
             key={filter}
-            className="flex h-[40px] cursor-pointer items-center justify-center text-sm"
+            className="flex h-[40px] cursor-pointer items-center justify-center text-xs"
             onClick={() => handleFilterChange(filter)}
           >
             {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -148,7 +159,7 @@ export default function UserWatchlist() {
                     ? "/back-svgrepo-com-select.svg"
                     : "/back-svgrepo-com-select-up.svg"
                 }
-                alt="select Arrow"
+                alt="Sort Arrow"
                 width={20}
                 height={20}
               />
@@ -158,15 +169,23 @@ export default function UserWatchlist() {
       </div>
 
       {/* Display currencies or a message if no currencies are found */}
-      {sortedFilteredCurrencies.length > 0
-        ? sortedFilteredCurrencies.map((currency: Currency) => (
-            <SingleCurrency
-              key={currency.cmc_rank}
-              data={currency}
-              removeCurrenyState={removeCurrenyState}
-            />
-          ))
-        : searchOpen && <div>No currencies found</div>}
+      {sortedFilteredCurrencies.length > 0 ? (
+        sortedFilteredCurrencies.map((currency: Currency) => (
+          <SingleCurrency
+            key={currency.cmc_rank}
+            data={currency}
+            removeCurrencyState={removeCurrencyState}
+          />
+        ))
+      ) : searchOpen ? (
+        <div className="w-[440px] text-center text-xs text-slate-500">
+          No currencies found
+        </div>
+      ) : (
+        <div className="w-[440px] text-center text-xs text-slate-500">
+          You aren&apos;t watching any coins at the moment
+        </div>
+      )}
     </div>
   );
 }
