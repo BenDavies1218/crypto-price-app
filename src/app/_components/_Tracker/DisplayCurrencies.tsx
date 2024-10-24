@@ -206,7 +206,7 @@ export default function DisplayCurrencies() {
 
       {/* Infinite scroll loader and ref to check when in view */}
       <div ref={ref} className="text-sm text-slate-400">
-        {isFetchingNextPage && searchOpen
+        {isFetchingNextPage
           ? "Loading more..."
           : "No more data to load."}
       </div>
